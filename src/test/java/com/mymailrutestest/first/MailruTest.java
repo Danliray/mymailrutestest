@@ -21,7 +21,7 @@ public class MailruTest {
     }*/
 
     @Test
-    public void enterUser() {
+    void enterUser() {
 
         String loginUser1 = "testovyy.akkaunt1@bk.ru";//логин 1 аккаунта
         String passUser1 = "test.akka1";//пароль 1 аккаунта
@@ -67,7 +67,7 @@ public class MailruTest {
         $("#b-thread .attachment").shouldBe(enabled);
         //$("#b-thread span.attachment__content-text").shouldHave(text("mdm система"));
 
-        //отвечаю на письмо на аккаунт 1
+        //отвечаю на письмо от аккаунта 1
         answerMail(bodyMail2);
 
         //переключаюсь на 1 вкладку от первого аккаунта
@@ -82,11 +82,11 @@ public class MailruTest {
         //открываю 1-е входящее письмо
         $("#b-letters .b-datalist__body > div:nth-child(1)").click();
 
-        //Проверка темы, тела и аттача
+        //Проверка тела
         $("#b-thread .js-readmsg-msg").shouldHave(text(bodyMail2));
     }
 
-    public void authorizationsUser(String loginUser, String passUser) {
+    void authorizationsUser(String loginUser, String passUser) {
         //проверка, какой аккуунт авторизуется
         if ($(By.name("Login")).isDisplayed()){
             //авторизация под вторым аккаунтом
@@ -102,7 +102,7 @@ public class MailruTest {
         $$("i.x-ph__menu__button__text_auth").findBy(text(loginUser));
     }
 
-    public void mceEditorEdit(String bodyMail) {
+    void mceEditorEdit(String bodyMail) {
         //ввожу тело письма:
         SelenideElement mce = $("#tinymce");
         //Переключаю фрейм
@@ -115,7 +115,7 @@ public class MailruTest {
     }
 
 
-    public void sendMail(int numMails, String email, String subj, String bodyMail, String myUrlFile) {
+    void sendMail(int numMails, String email, String subj, String bodyMail, String myUrlFile) {
         for (int i = 1; i <= numMails; i++) {
                 sleep(1000);
                 //Кликаю кнопку "Написать письмо"
@@ -143,7 +143,7 @@ public class MailruTest {
         }
     }
 
-    public void answerMail(String bodyMail){
+    void answerMail(String bodyMail){
         $$("#b-toolbar__right span")
                 .findBy(text("Ответить")).click();
         //Тело письма:
