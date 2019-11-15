@@ -8,6 +8,7 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 
 import static com.codeborne.selenide.Condition.*;
+import static com.codeborne.selenide.CollectionCondition.*;
 import static com.codeborne.selenide.Configuration.baseUrl;
 import static com.codeborne.selenide.Configuration.browser;
 import static com.codeborne.selenide.Selectors.*;
@@ -33,6 +34,7 @@ public class MailruTest {
         int numMails = 1; //количество писем
         String subj = "Тестовое задание Selenide"; //тема письма
         String bodyMail = "Тело письма Selenide"; //Тело письма
+        String bodyMail2 = "Выполнено"; //Тело ответного письма
         String myUrlFile = "C:\\selenide\\mdm.txt"; //ссылка на прикрепляемый файл
         Configuration.holdBrowserOpen = true;
 
@@ -52,15 +54,35 @@ public class MailruTest {
 
         //нажатие на кнопку выбора аккаунта
         $("span#PH_authMenu_button").shouldBe(enabled).click();
+        sleep(1000);
         $("a#PH_loginAnotherLink").shouldBe(enabled).click();
 
         //авторизация под вторым аккаунтом
-        sleep(2000);
+        sleep(1000);
         switchTo().frame($(".ag-popup__frame__layout__iframe"));
         autorizationUser2(loginUser2, passUser2);
 
         //открываю группу писем
-        $("div.b-datalist__item__subj").shouldBe(text(subj)).click();
+        //$("div.b-datalist__item__subj").shouldBe(text(subj)).click();
+
+        //выбираю "только непрочитанные"
+        $(byXpath("//div[@data-group=\"selectAll\"]")).$("div.b-dropdown__arrow").click();
+        $$(".b-toolbar__group").findBy(text("Непрочитанные")).click();
+
+        //открываю 3-е непрочитаннае письмо
+        $("#b-letters .b-datalist__body > div:nth-child(3)").click();
+
+        //Проверка темы, тела и аттача
+        $("#b-thread .b-letter__head__subj__text").shouldHave(text(subj));
+        $("#b-thread .js-readmsg-msg").shouldHave(text(bodyMail));
+        $("#b-thread .attachment").shouldBe(enabled);
+        //$("#b-thread span.attachment__content-text").shouldHave(text("mdm система"));
+
+        //отвечаю на письмо на аккаунт 1
+        $$("#b-toolbar__right span")
+                .findBy(text("Ответить")).click();
+        //Тело письма:
+        mceEditorEdit(bodyMail2);
 
 
     }
@@ -82,23 +104,22 @@ public class MailruTest {
 
     }
 
-    //Ввод логина и пароля
-        //$(By.name("Login")).shouldBe(enabled).setValue(loginUser).pressEnter();
-        //switchTo().activeElement().sendKeys(loginUser);
-        //$(By.xpath("//input[@type=\"submit\"]")).click();
-        //switchTo().activeElement().sendKeys(Keys.ENTER);
-
-        //switchTo().activeElement().sendKeys(passUser);
-        //switchTo().activeElement().sendKeys(Keys.ENTER);
-
-
-        //Проверка авторизации
-        //$$("i.x-ph__menu__button__text_auth").findBy(text("testovyy.akkaunt2@bk.ru"));
+    public void mceEditorEdit(String bodyMail) {
+        //ввожу тело письма:
+        SelenideElement mce = $("#tinymce");
+        //Переключаю фрейм
+        switchTo().frame($(".mceLayout").$(By.tagName("iframe")));
+        mce.click();
+        mce.clear();
+        mce.sendKeys(bodyMail);
+        //в дефолтный фрейм
+        switchTo().defaultContent();
+    }
 
 
     public void sendMail(int numMails, String email, String subj, String bodyMail, String myUrlFile) {
         for (int i = 1; i <= numMails; i++) {
-            try {
+
                 //Кликаю кнопку "Написать письмо"
                 $$("#b-toolbar__left span")
                         .findBy(text("Написать письмо")).click();
@@ -110,14 +131,7 @@ public class MailruTest {
                 $(By.name("Subject")).setValue(subj);
 
                 //Тело письма:
-                SelenideElement mce = $("#tinymce");
-                //Переключаю фрейм
-                switchTo().frame($(".mceLayout").$(By.tagName("iframe")));
-                mce.click();
-                mce.clear();
-                mce.sendKeys(bodyMail);
-                //в дефолтный фрейм
-                switchTo().defaultContent();
+                mceEditorEdit(bodyMail);
 
                 //прикрепляю файл mdm с текстом mdm-система
                 $(byXpath("//input[@type=\"file\"]")).sendKeys(myUrlFile);
@@ -128,16 +142,16 @@ public class MailruTest {
 
                 //проверка отправки письма
                 $("div.message-sent__title").shouldBe(exactText("Ваше письмо отправлено. Перейти во Входящие"));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 }
 
 /*----------------Пробы пера---------------------*/
 
+//        try {
+//            } catch (Exception e) {
+//                    e.printStackTrace();
+//                    }
 //.shouldNotBe(visible);
 //$(byXpath("//a[@rel=\"history\"]")).waitWhile((text(" отправлено. ")), 10000);
 //Кликаю кнопку "Написать письмо"
@@ -199,3 +213,25 @@ public class MailruTest {
 //$$(".username-formfield").shouldBe().findBy(type("text")).sendKeys(loginUser2);
 //$("#root").find(By.xpath("//input[@autocomplete=\"username\"]")).setValue(loginUser2).pressEnter();
 //$("#root").$(By.name("password")).setValue(passUser2).pressEnter();
+//Ввод логина и пароля
+//$(By.name("Login")).shouldBe(enabled).setValue(loginUser).pressEnter();
+//switchTo().activeElement().sendKeys(loginUser);
+//$(By.xpath("//input[@type=\"submit\"]")).click();
+//switchTo().activeElement().sendKeys(Keys.ENTER);
+
+//switchTo().activeElement().sendKeys(passUser);
+//switchTo().activeElement().sendKeys(Keys.ENTER);
+
+
+//Проверка авторизации
+//$$("i.x-ph__menu__button__text_auth").findBy(text("testovyy.akkaunt2@bk.ru"));
+
+//.$(".b-datalist__item_unread")
+//.filterBy(withText("Selenide")
+//.sh(text("Тестовое задание Selenide")).click();
+//$)//.find(byCssSelector()".b-datalist__item")//.shouldHave(size(6))//.shouldHave(cssValue("font-weight", "bold;"))
+//$("#b-letters .b-datalist__body > div:nth-child(3)")//.filterBy(cssClass("b-datalist__item_unread")
+//        .$(".b-datalist__item_unread")
+//       .find("");
+//       .shouldHave().find().click();
+//> div:nth-child(3)
