@@ -1,16 +1,12 @@
-import com.codeborne.selenide.Condition;
+package com.mymailrutestest.first;
+
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.SelenideElement;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 
 import static com.codeborne.selenide.Condition.*;
-import static com.codeborne.selenide.CollectionCondition.*;
-import static com.codeborne.selenide.Configuration.baseUrl;
-import static com.codeborne.selenide.Configuration.browser;
 import static com.codeborne.selenide.Selectors.*;
 import static com.codeborne.selenide.Selenide.*;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
@@ -31,7 +27,7 @@ public class MailruTest {
         String passUser1 = "test.akka1";//пароль 1 аккаунта
         String loginUser2 = "testovyy.akkaunt2@bk.ru";//логин 2 аккаунта
         String passUser2 = "test.akka2";//пароль 2 аккаунта
-        int numMails = 1; //количество писем
+        int numMails = 6; //количество писем
         String subj = "Тестовое задание Selenide"; //тема письма
         String bodyMail = "Тело письма Selenide"; //Тело письма
         String bodyMail2 = "Выполнено"; //Тело ответного письма
@@ -42,12 +38,12 @@ public class MailruTest {
         open("https://mail.ru/");
 
         //авторизация под первым аккаунтом и проверка авторизации
-        autorizationUser1(loginUser1, passUser1);
+        authorizationsUser(loginUser1, passUser1);
 
         //отправляю письма на второй аккаунт и проверяю отправку писем
         sendMail(numMails, loginUser2, subj, bodyMail, myUrlFile);
 
-        //переключаюсь на 2 вкладку
+        //создаю и переключаюсь на 2 вкладку
         JavascriptExecutor jse = (JavascriptExecutor)getWebDriver();
         jse.executeScript("window.open('https://mail.ru/');");
         switchTo().window(1);
@@ -60,14 +56,7 @@ public class MailruTest {
         //авторизация под вторым аккаунтом
         sleep(1000);
         switchTo().frame($(".ag-popup__frame__layout__iframe"));
-        autorizationUser2(loginUser2, passUser2);
-
-        //открываю группу писем
-        //$("div.b-datalist__item__subj").shouldBe(text(subj)).click();
-
-        //выбираю "только непрочитанные"
-        $(byXpath("//div[@data-group=\"selectAll\"]")).$("div.b-dropdown__arrow").click();
-        $$(".b-toolbar__group").findBy(text("Непрочитанные")).click();
+        authorizationsUser(loginUser2, passUser2);
 
         //открываю 3-е непрочитаннае письмо
         $("#b-letters .b-datalist__body > div:nth-child(3)").click();
@@ -79,29 +68,38 @@ public class MailruTest {
         //$("#b-thread span.attachment__content-text").shouldHave(text("mdm система"));
 
         //отвечаю на письмо на аккаунт 1
-        $$("#b-toolbar__right span")
-                .findBy(text("Ответить")).click();
-        //Тело письма:
-        mceEditorEdit(bodyMail2);
+        answerMail(bodyMail2);
 
+        //переключаюсь на 1 вкладку от первого аккаунта
+        switchTo().window(0);
 
+        //ждем пока письмо придет
+        sleep(5000);
+
+        //перехожу во входящие 1 аккаунта
+        $(byXpath("//a[@href=\"/messages/inbox/\"]")).click();
+
+        //открываю 1-е входящее письмо
+        $("#b-letters .b-datalist__body > div:nth-child(1)").click();
+
+        //Проверка темы, тела и аттача
+        $("#b-thread .js-readmsg-msg").shouldHave(text(bodyMail2));
     }
 
-    public void autorizationUser1(String loginUser, String passUser) {
-        //авторизация под первым аккаунтом
-        $(By.name("login")).shouldBe(exist).setValue(loginUser).pressEnter();
-        $(By.name("password")).shouldBe(exist).setValue(passUser).pressEnter();
+    public void authorizationsUser(String loginUser, String passUser) {
+        //проверка, какой аккуунт авторизуется
+        if ($(By.name("Login")).isDisplayed()){
+            //авторизация под вторым аккаунтом
+            $(By.name("Login")).should(exist).setValue(loginUser).pressEnter();
+            $(By.name("Password")).should(exist).setValue(passUser).pressEnter();
+        }
+        else {
+            //авторизация под первым аккаунтом
+            $(By.name("login")).shouldBe(exist).setValue(loginUser).pressEnter();
+            $(By.name("password")).shouldBe(exist).setValue(passUser).pressEnter();
+        }
         //Проверка авторизации
         $$("i.x-ph__menu__button__text_auth").findBy(text(loginUser));
-    }
-
-    public void autorizationUser2(String loginUser, String passUser) {
-        //авторизация под вторым аккаунтом
-        $(By.name("Login")).should(exist).setValue(loginUser).pressEnter();
-        $(By.name("Password")).should(exist).setValue(passUser).pressEnter();
-        //Проверка авторизации
-        $$("i.x-ph__menu__button__text_auth").findBy(text(loginUser));
-
     }
 
     public void mceEditorEdit(String bodyMail) {
@@ -119,7 +117,7 @@ public class MailruTest {
 
     public void sendMail(int numMails, String email, String subj, String bodyMail, String myUrlFile) {
         for (int i = 1; i <= numMails; i++) {
-
+                sleep(1000);
                 //Кликаю кнопку "Написать письмо"
                 $$("#b-toolbar__left span")
                         .findBy(text("Написать письмо")).click();
@@ -143,6 +141,17 @@ public class MailruTest {
                 //проверка отправки письма
                 $("div.message-sent__title").shouldBe(exactText("Ваше письмо отправлено. Перейти во Входящие"));
         }
+    }
+
+    public void answerMail(String bodyMail){
+        $$("#b-toolbar__right span")
+                .findBy(text("Ответить")).click();
+        //Тело письма:
+        mceEditorEdit(bodyMail);
+
+        //Кликаю кнопку "Отправить"
+        $$("#b-toolbar__right span")
+                .findBy(text("Отправить")).click();
     }
 }
 
@@ -235,3 +244,17 @@ public class MailruTest {
 //       .find("");
 //       .shouldHave().find().click();
 //> div:nth-child(3)
+//открываю группу писем
+//$("div.b-datalist__item__subj").shouldBe(text(subj)).click();
+
+//выбираю "только непрочитанные"
+//$(byXpath("//div[@data-group=\"selectAll\"]")).$("div.b-dropdown__arrow").click();
+//$$(".b-toolbar__group").findBy(text("Непрочитанные")).click();
+//public void autorizationUser2(String loginUser, String passUser) {
+//    //авторизация под вторым аккаунтом
+//    $(By.name("Login")).should(exist).setValue(loginUser).pressEnter();
+//    $(By.name("Password")).should(exist).setValue(passUser).pressEnter();
+//    //Проверка авторизации
+//    $$("i.x-ph__menu__button__text_auth").findBy(text(loginUser));
+//
+//}
