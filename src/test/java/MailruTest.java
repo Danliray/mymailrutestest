@@ -26,58 +26,75 @@ public class MailruTest {
     @Test
     public void enterUser() {
 
-        String loginUser1 = "testovyy.akkaunt1@bk.ru";
-        String passUser1 = "test.akka1";
-        String loginUser2 = "testovyy.akkaunt2@bk.ru";
-        String passUser2 = "test.akka2";
-        int numMails = 1;
-        String email = "testovyy.akkaunt2@bk.ru";
-        String subj = "Тестовое задание Selenide";
-        String bodyMail = "Тело письма Selenide";
-        String myUrlFile = "C:\\selenide\\mdm.txt";
+        String loginUser1 = "testovyy.akkaunt1@bk.ru";//логин 1 аккаунта
+        String passUser1 = "test.akka1";//пароль 1 аккаунта
+        String loginUser2 = "testovyy.akkaunt2@bk.ru";//логин 2 аккаунта
+        String passUser2 = "test.akka2";//пароль 2 аккаунта
+        int numMails = 1; //количество писем
+        String subj = "Тестовое задание Selenide"; //тема письма
+        String bodyMail = "Тело письма Selenide"; //Тело письма
+        String myUrlFile = "C:\\selenide\\mdm.txt"; //ссылка на прикрепляемый файл
         Configuration.holdBrowserOpen = true;
-        //Configuration.timeout = 10000;
-        //открываю первую вкладку
+
+        //открываю 1 вкладку
         open("https://mail.ru/");
 
-        //авторизация под первым аккаунтом и проверяю авторизацию
-        autorizationUser(loginUser1, passUser1);
+        //авторизация под первым аккаунтом и проверка авторизации
+        autorizationUser1(loginUser1, passUser1);
+
         //отправляю письма на второй аккаунт и проверяю отправку писем
-        sendMail(numMails, email, subj, bodyMail, myUrlFile);
+        sendMail(numMails, loginUser2, subj, bodyMail, myUrlFile);
+
         //переключаюсь на 2 вкладку
-        //JavascriptExecutor jse = (JavascriptExecutor)getWebDriver();
-        //jse.executeScript("window.open('https://mail.ru/');");
-        //switchTo().window(1);
-        $("span#PH_authMenu_button").click();
-        $("a#PH_loginAnotherLink").click();
-        //авторизация под вторым аккаунтом и проверяю авторизацию
+        JavascriptExecutor jse = (JavascriptExecutor)getWebDriver();
+        jse.executeScript("window.open('https://mail.ru/');");
+        switchTo().window(1);
 
+        //нажатие на кнопку выбора аккаунта
+        $("span#PH_authMenu_button").shouldBe(enabled).click();
+        $("a#PH_loginAnotherLink").shouldBe(enabled).click();
 
-       // $("."));
-        //switchTo().activeElement().sendKeys(loginUser2);
-        //switchTo().frame($("frame.ag-popup__frame__layout__iframe"));
-        //System.out.println(switchTo().frame($(".ag-popup__frame__layout__iframe")).getPageSource());
-        //witchTo().frame($(".ag-popup__frame__layout__iframe")).getPageSource();
+        //авторизация под вторым аккаунтом
+        sleep(2000);
         switchTo().frame($(".ag-popup__frame__layout__iframe"));
-        //switchTo().innerFrame($(ByTagName("frame")));
-        //System.out.println($$(By.tagName(frame);
-        switchTo().activeElement().sendKeys(loginUser2);
-        //autorizationUser(loginUser2, passUser2);
-        //sendMail(numMails, email, subj, bodyMail, myUrlFile);
-        //$("#root").$(By.name("login")).setValue(loginUser2).pressEnter();
-        //$("#root").$(By.name("password")).setValue(passUser2).pressEnter();
+        autorizationUser2(loginUser2, passUser2);
+
+        //открываю группу писем
+        $("div.b-datalist__item__subj").shouldBe(text(subj)).click();
 
 
     }
 
-    public void autorizationUser(String loginUser, String passUser) {
-        //Ввод логина и пароля
-        $(By.name("login")).shouldBe(enabled).setValue(loginUser).pressEnter();
-        $(By.name("password")).shouldBe(enabled).setValue(passUser).pressEnter();
+    public void autorizationUser1(String loginUser, String passUser) {
+        //авторизация под первым аккаунтом
+        $(By.name("login")).shouldBe(exist).setValue(loginUser).pressEnter();
+        $(By.name("password")).shouldBe(exist).setValue(passUser).pressEnter();
+        //Проверка авторизации
+        $$("i.x-ph__menu__button__text_auth").findBy(text(loginUser));
+    }
+
+    public void autorizationUser2(String loginUser, String passUser) {
+        //авторизация под вторым аккаунтом
+        $(By.name("Login")).should(exist).setValue(loginUser).pressEnter();
+        $(By.name("Password")).should(exist).setValue(passUser).pressEnter();
+        //Проверка авторизации
+        $$("i.x-ph__menu__button__text_auth").findBy(text(loginUser));
+
+    }
+
+    //Ввод логина и пароля
+        //$(By.name("Login")).shouldBe(enabled).setValue(loginUser).pressEnter();
+        //switchTo().activeElement().sendKeys(loginUser);
+        //$(By.xpath("//input[@type=\"submit\"]")).click();
+        //switchTo().activeElement().sendKeys(Keys.ENTER);
+
+        //switchTo().activeElement().sendKeys(passUser);
+        //switchTo().activeElement().sendKeys(Keys.ENTER);
+
 
         //Проверка авторизации
-        $$("i.x-ph__menu__button__text_auth").findBy(text("testovyy.akkaunt2@bk.ru"));
-    }
+        //$$("i.x-ph__menu__button__text_auth").findBy(text("testovyy.akkaunt2@bk.ru"));
+
 
     public void sendMail(int numMails, String email, String subj, String bodyMail, String myUrlFile) {
         for (int i = 1; i <= numMails; i++) {
@@ -159,3 +176,26 @@ public class MailruTest {
 //SelenideElement PH = $("#PH_user-email").shouldBe(enabled).
 //       .$(byText("testovyy.akkaunt1@bk.ru"))
 //       .shouldBe(visible);
+//Configuration.timeout = 10000;
+//autorizationUser(loginUser1, passUser1);
+//switchTo().defaultContent();
+//switchTo().frame(3);
+//$("input").click();
+//sendKeys(loginUser2);
+//switchTo().activeElement().sendKeys(loginUser2);
+
+//switchTo().frame($(".mceLayout").$(By.tagName("iframe")));
+//System.out.println(switchTo().frame($(".ag-popup__frame__layout__iframe")).getPageSource());
+//switchTo().frame($(".ag-popup__frame__layout__iframe")).getPageSource();
+//switchTo().frame($(".ag-popup__frame__layout__iframe"));
+//switchTo().innerFrame($(ByTagName("frame")));
+//System.out.println($$(By.tagName(frame);
+//switchTo().activeElement().sendKeys(loginUser2);
+
+//autorizationUser(loginUser2, passUser2);
+//$("input").sendKeys(loginUser2);
+
+//sendMail(numMails, email, subj, bodyMail, myUrlFile);
+//$$(".username-formfield").shouldBe().findBy(type("text")).sendKeys(loginUser2);
+//$("#root").find(By.xpath("//input[@autocomplete=\"username\"]")).setValue(loginUser2).pressEnter();
+//$("#root").$(By.name("password")).setValue(passUser2).pressEnter();
